@@ -77,4 +77,9 @@ export class UserDto implements IUser{
   })
   equippedSkin?: ItemEntity;
 
+  @ApiProperty({
+    description: 'Количество сыгранных игр',
+    example: 42,
+  })
+  gamesCount?: number;
 }

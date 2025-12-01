@@ -12,6 +12,7 @@ import { UserTasksEntity } from './entity/user-tasks.entity';
 import { CoinHistoryEntity } from './entity/coin-history.entity';
 import { CaseHistoryEntity } from './entity/case-history.entity';
 import { EnergyHistoryEntity } from './entity/energy-history.entity';
+import { GameHistoryEntity } from './entity/game-history.entity';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { EnergyHistoryEntity } from './entity/energy-history.entity';
       CoinHistoryEntity,
       CaseHistoryEntity,
       EnergyHistoryEntity,
+      GameHistoryEntity,
     ]), 
     JwtProviderModule,
     EnergyCacheModule,

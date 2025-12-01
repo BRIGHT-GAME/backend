@@ -15,6 +15,7 @@ import { UserTasksEntity } from './entity/user-tasks.entity';
 import { CoinHistoryEntity } from './entity/coin-history.entity';
 import { CaseHistoryEntity, ECaseType } from './entity/case-history.entity';
 import { EnergyHistoryEntity } from './entity/energy-history.entity';
+import { GameHistoryEntity } from './entity/game-history.entity';
 
 const CASE_PRICE = 200;
 const COINS_PER_TOKEN = 100;
@@ -214,6 +215,8 @@ export class UserService {
     private readonly caseHistoryRepository: Repository<CaseHistoryEntity>,
     @InjectRepository(EnergyHistoryEntity)
     private readonly energyHistoryRepository: Repository<EnergyHistoryEntity>,
+    @InjectRepository(GameHistoryEntity)
+    private readonly gameHistoryRepository: Repository<GameHistoryEntity>,
   ) {}
 
 
@@ -250,7 +253,7 @@ export class UserService {
     if (!user) {
       throw new NotFoundException(`User with wallet ${wallet} not found`);
     }
-    return user;
+    return this.enrichUserWithGamesCount(user);
   }
 
   async updateUser(id: number, dto: UpdateUserDto): Promise<UserEntity> {
@@ -278,7 +281,13 @@ export class UserService {
     user.gameCoins = data.newGem;
     user.level = data.level;
     user.levelInd = data.levelInd;
-    
+    await this.gameHistoryRepository.save({
+      userId: user.id,
+      score: user.score,
+      level: data.level,
+      levelInd: data.levelInd,
+      gameCoins: data.newGem,
+    });
     return this.userRepo.save(user);
   }
 
@@ -323,7 +332,8 @@ export class UserService {
     // Обновляем активный скин: всегда может быть надет только один.
     user.equippedSkin = inventorySkin.item
 
-    return this.userRepo.save(user);
+    const savedUser = await this.userRepo.save(user);
+    return this.enrichUserWithGamesCount(savedUser);
   }
 
   async buyItem(wallet: string, itemName: string): Promise<UserDto> {
@@ -369,10 +379,11 @@ export class UserService {
     await this.userRepo.update(user.id,{gameCoins: user.gameCoins});
 
     // 6) Возвращаем обновлённые данные пользователя в формате DTO
-    return await this.userRepo.findOne({
+    const updatedUser = await this.userRepo.findOne({
       where: {id: user.id},
       relations: ['inventory', 'inventory.item', 'equippedSkin'],
     });
+    return this.enrichUserWithGamesCount(updatedUser);
   }
 
 
@@ -421,9 +432,11 @@ export class UserService {
       throw new UnauthorizedException("The user doesn't exist");
     }
 
+    const userWithGamesCount = await this.enrichUserWithGamesCount(user);
+
     return {
       accessToken,
-      user,
+      user: userWithGamesCount,
     }
   }
 
@@ -519,7 +532,8 @@ export class UserService {
       user.energyCurrent = currentEnergy > MAX_ENERGY ? MAX_ENERGY : currentEnergy;
     }
     user.energyMax = energyMax;
-    return this.userRepo.save(user);
+    const savedUser = await this.userRepo.save(user);
+    return this.enrichUserWithGamesCount(savedUser);
   }
 
   async getLastCoinHistory(userId: number): Promise<CoinHistoryEntity | null> {
@@ -564,6 +578,26 @@ export class UserService {
     } catch (error) {
       return null;
     }
+  }
+
+  async getGamesCount(userId: number): Promise<number> {
+    try {
+      return await this.gameHistoryRepository.count({
+        where: {
+          userId
+        }
+      });
+    } catch (error) {
+      return 0;
+    }
+  }
+
+  private async enrichUserWithGamesCount(user: UserEntity): Promise<UserDto> {
+    const gamesCount = await this.getGamesCount(user.id);
+    return {
+      ...user,
+      gamesCount,
+    };
   }
 
 

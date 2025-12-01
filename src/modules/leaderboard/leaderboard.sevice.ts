@@ -15,7 +15,7 @@ export class LeaderboardService {
     const users = await this.userRepository.find({
       order: { level: 'DESC' },
       take: limit,
-      select: ['username', 'level'],
+      select: ['username', 'level', 'gameCoins', 'id'],
     });
 
     return users.map((user) => ({
