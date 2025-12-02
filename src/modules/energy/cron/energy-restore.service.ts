@@ -14,8 +14,8 @@ export class EnergyRestoreService {
     private readonly userService: UserService,
   ) {}
 
-  // Крон, запускающийся раз в 5 минут (пример)
-  @Cron(CronExpression.EVERY_5_MINUTES)
+  // Крон, запускающийся раз в минуту
+  @Cron(CronExpression.EVERY_MINUTE)
   async restoreEnergy() {
     this.logger.log('🔄 Начинаем проверку восстановления энергии...');
     const userIds = this.energyCacheService.getAllUserIds();
