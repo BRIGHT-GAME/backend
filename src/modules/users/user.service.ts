@@ -446,13 +446,13 @@ export class UserService {
 
   private getEnergyForSolBalance(solBalance: number): number {
     if (solBalance >= 1) {
-      return 120;
+      return 240;
     } else if (solBalance >= 0.1) {
-      return 80;
+      return 160;
     } else if (solBalance >= 0.01) {
-      return 40;
+      return 80;
     } else {
-      return 2;
+      return 80;
     }
   }
 
@@ -488,11 +488,7 @@ export class UserService {
     }
 
     const energyFromBalance = this.getEnergyForSolBalance(solBalance);
-
-    const energyFromTasks = await this.userTaskRepo.find({ where: { userId: user.id, completed: true }, relations: ['task'] });
-    const totalEnergy = energyFromTasks.reduce((acc, item) => acc + item.task?.value, 0);
-
-    const energyMax = energyFromBalance + totalEnergy;
+    const energyMax = energyFromBalance;
 
     const energyRow = await this.getLastEnergyHistory(user.id);
     if (energyRow) {

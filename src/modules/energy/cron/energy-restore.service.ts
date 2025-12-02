@@ -27,17 +27,17 @@ export class EnergyRestoreService {
       // Получаем актуальные данные из БД (currentEnergy, maxEnergy)
       const user = await this.userService.getUser(userId);
 
-      // Для каждого spentTime проверяем, прошло ли 8 часов
+      // Для каждого spentTime проверяем, прошло ли 16 минут (ускорено в 30 раз)
       const now = new Date();
-      const eightHours = 8 * 60 * 60 * 1000;
+      const sixteenMinutes = (8 * 60 * 60 * 1000) / 30; // 8 часов / 30 = 16 минут
 
       let updated = false;
       const newSpentTimes = [];
 
       for (const spentTime of cacheData.spentTimes) {
         const diff = now.getTime() - spentTime.getTime();
-        if (diff >= eightHours) {
-          // Прошло 8 часов, восстанавливаем 1 энергию
+        if (diff >= sixteenMinutes) {
+          // Прошло 16 минут, восстанавливаем 1 энергию
           if (user.energyCurrent < user.energyMax) {
             user.energyCurrent++;
             updated = true;
@@ -45,7 +45,7 @@ export class EnergyRestoreService {
           // Если energyCurrent == energyMax, мы не накапливаем сверх лимита
           // значит не добавляем spentTime в newSpentTimes
         } else {
-          // Ещё не прошло 8 часов, сохраняем запись
+          // Ещё не прошло 16 минут, сохраняем запись
           newSpentTimes.push(spentTime);
         }
       }

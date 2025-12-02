@@ -1,12 +1,14 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { TaskEntity } from './task.entity';
+import { EValueType, TaskEntity } from './task.entity';
 import { Repository } from 'typeorm';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UserTasksEntity } from '../users/entity/user-tasks.entity';
 import { UserEntity } from '../users/entity/user.entity';
 import { UserService } from '../users/user.service';
 import { UserDto } from '../users/dto/user.dto';
+
+const MAX_ENERGY = 500;
 
 @Injectable()
 export class TaskService {
@@ -75,6 +77,19 @@ export class TaskService {
     });
 
     await this.userTaskRepo.save(completedTask);
+
+    if (task.value && task.value > 0) {
+      if (task.valueType === EValueType.ENERGY) {
+        const newEnergy = Math.min(user.energyCurrent + task.value, user.energyMax, MAX_ENERGY);
+        user.energyCurrent = newEnergy;
+        await this.userRepo.save(user);
+      }
+      if (task.valueType === EValueType.COINS) {
+        user.gameCoins += task.value;
+        await this.userRepo.save(user);
+      }
+    }
+    
     return this.userService.setEnergyAndCoins(user.walletAddress);
   }
 }
