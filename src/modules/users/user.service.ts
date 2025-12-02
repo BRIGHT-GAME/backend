@@ -590,9 +590,25 @@ export class UserService {
 
   private async enrichUserWithGamesCount(user: UserEntity): Promise<UserDto> {
     const gamesCount = await this.getGamesCount(user.id);
+    
+    const now = new Date();
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    
+    const todayDailyCase = await this.caseHistoryRepository.findOne({
+      where: { 
+        userId: user.id, 
+        isDaily: true 
+      },
+      order: { createdAt: 'DESC' }
+    });
+    
+    const hasOpenedDailyCase = todayDailyCase && 
+      todayDailyCase.createdAt >= startOfDay;
+    
     return {
       ...user,
       gamesCount,
+      hasOpenedDailyCase: !!hasOpenedDailyCase,
     };
   }
 

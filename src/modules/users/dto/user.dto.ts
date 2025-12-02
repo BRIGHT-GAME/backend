@@ -82,4 +82,10 @@ export class UserDto implements IUser{
     example: 42,
   })
   gamesCount?: number;
+
+  @ApiProperty({
+    description: 'Открывал ли пользователь ежедневный сундук сегодня',
+    example: true,
+  })
+  hasOpenedDailyCase?: boolean;
 }
