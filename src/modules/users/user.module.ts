@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserEntity } from './entity/user.entity';
 import { UserService } from './user.service';
@@ -13,6 +13,7 @@ import { CoinHistoryEntity } from './entity/coin-history.entity';
 import { CaseHistoryEntity } from './entity/case-history.entity';
 import { EnergyHistoryEntity } from './entity/energy-history.entity';
 import { GameHistoryEntity } from './entity/game-history.entity';
+import { TaskModule } from '../task/task.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { GameHistoryEntity } from './entity/game-history.entity';
     JwtProviderModule,
     EnergyCacheModule,
     ItemsModule,
+    forwardRef(() => TaskModule),
   ],
   controllers: [UserController],
   providers: [UserService, TokenService],

@@ -1,4 +1,4 @@
-import {BadRequestException, ConflictException, Inject, Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException} from '@nestjs/common';
+import {BadRequestException, ConflictException, Inject, Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException, forwardRef} from '@nestjs/common';
 import {InjectRepository} from '@nestjs/typeorm';
 import {Repository} from 'typeorm';
 import {UserEntity} from './entity/user.entity';
@@ -16,6 +16,7 @@ import { CoinHistoryEntity } from './entity/coin-history.entity';
 import { CaseHistoryEntity, ECaseType } from './entity/case-history.entity';
 import { EnergyHistoryEntity } from './entity/energy-history.entity';
 import { GameHistoryEntity } from './entity/game-history.entity';
+import { TaskService } from '../task/task.service';
 
 const CASE_PRICE = 200;
 const COINS_PER_TOKEN = 100;
@@ -217,6 +218,8 @@ export class UserService {
     private readonly energyHistoryRepository: Repository<EnergyHistoryEntity>,
     @InjectRepository(GameHistoryEntity)
     private readonly gameHistoryRepository: Repository<GameHistoryEntity>,
+    @Inject(forwardRef(() => TaskService))
+    private readonly taskService: TaskService,
   ) {}
 
 
@@ -288,7 +291,12 @@ export class UserService {
       levelInd: data.levelInd,
       gameCoins: data.newGem,
     });
-    return this.userRepo.save(user);
+    const savedUser = await this.userRepo.save(user);
+    
+    const gamesCount = await this.getGamesCount(user.id);
+    await this.taskService.checkAndCompleteGamesTasks(user.id, gamesCount);
+    
+    return savedUser;
   }
 
   async startGame(wallet: string): Promise<GameStartResponseDto> {
