@@ -117,7 +117,7 @@ export class TaskService {
   }
 
   async checkAndCompleteGamesTasks(userId: number, gamesCount: number): Promise<void> {
-    const taskKeysMap: Record<string, number> = {
+    const taskConditionsMap: Record<string, number> = {
       firstgame: 1,
       tengames: 10,
       fiftygames: 50,
@@ -126,7 +126,7 @@ export class TaskService {
       fivehundredgames: 500,
     };
 
-    for (const [condition, requiredGames] of Object.entries(taskKeysMap)) {
+    for (const [condition, requiredGames] of Object.entries(taskConditionsMap)) {
       if (gamesCount >= requiredGames) {
         await this.completeTaskByCondition(userId, condition);
       }
