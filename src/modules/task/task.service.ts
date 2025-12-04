@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EValueType, TaskEntity } from './task.entity';
 import { Repository } from 'typeorm';
@@ -19,6 +19,7 @@ export class TaskService {
     private userTaskRepo: Repository<UserTasksEntity>,
     @InjectRepository(UserEntity)
     private userRepo: Repository<UserEntity>,
+    @Inject(forwardRef(() => UserService))
     private userService: UserService,
   ) {}
 
