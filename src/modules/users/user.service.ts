@@ -21,6 +21,7 @@ import { TaskService } from '../task/task.service';
 const CASE_PRICE = 200;
 const COINS_PER_TOKEN = 100;
 const MAX_ENERGY = 500;
+const CASE_COOLDOWN_MS = 24 * 60 * 60 * 1000; // 1 day
 
 type TStartDiapason = number;
 type TEndDiapason = number;
@@ -613,15 +614,20 @@ export class UserService {
     const hasOpenedDailyCase = todayDailyCase && 
       todayDailyCase.createdAt >= startOfDay;
     
+    const currentTimestamp = Date.now();
+    const caseAvailable = !user.nextCaseTS || user.nextCaseTS <= currentTimestamp;
+    
     return {
       ...user,
       gamesCount,
       hasOpenedDailyCase: !!hasOpenedDailyCase,
+      caseAvailable,
+      nextCaseTS: user.nextCaseTS,
     };
   }
 
 
-  async openCase(userId: number): Promise<ECaseType | null> {
+  async openCase(userId: number): Promise<{ caseType: ECaseType; nextCaseTS: number }> {
     const user = await this.userRepo.findOne({ where: { id: userId } });
 
     if (!user) {
@@ -630,6 +636,11 @@ export class UserService {
 
     if (user.gameCoins < CASE_PRICE) {
       throw new BadRequestException(`У пользователя недостаточно монет, необходимо ${CASE_PRICE}`);
+    }
+
+    const currentTimestamp = Date.now();
+    if (user.nextCaseTS && user.nextCaseTS > currentTimestamp) {
+      throw new BadRequestException(`Кейс будет доступен через ${Math.ceil((user.nextCaseTS - currentTimestamp) / 1000)} секунд`);
     }
 
     const coef = Math.random();
@@ -649,9 +660,11 @@ export class UserService {
 
     await this.caseFunctions[caseType](user.id);
     user.gameCoins -= CASE_PRICE;
+    const now = Date.now();
+    user.nextCaseTS = now + CASE_COOLDOWN_MS;
     await this.userRepo.save(user);
     
-    return caseType;
+    return { caseType, nextCaseTS: user.nextCaseTS };
   }
 
   async openDailyCase(userId: number): Promise<ECaseType | null> {
