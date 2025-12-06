@@ -90,13 +90,13 @@ export class UserDto implements IUser{
   hasOpenedDailyCase?: boolean;
 
   @ApiProperty({
-    description: 'Доступен ли кейс для открытия',
+    description: 'Доступен ли ежедневный кейс для открытия',
     example: true,
   })
   caseAvailable?: boolean;
 
   @ApiProperty({
-    description: 'Timestamp когда будет доступен следующий кейс',
+    description: 'Timestamp когда будет доступен следующий ежедневный кейс',
     example: 1704067200000,
   })
   nextCaseTS?: number;
