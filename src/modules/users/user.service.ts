@@ -673,9 +673,12 @@ export class UserService {
     }
 
     const coef = Math.random();
-    let caseType: ECaseType;
+    let caseType: ECaseType | undefined;
 
     for (const key of Object.values(ECaseType)) {
+      if (key === ECaseType.gold_mask_repeat) {
+        continue;
+      }
       const [ bottom, top ] = CASE_CHANCES[key];
       if (coef >= bottom && coef <= top) {
         caseType = key as ECaseType;
@@ -692,6 +695,11 @@ export class UserService {
     user.nextCaseTS = now + CASE_COOLDOWN_MS;
     await this.userRepo.save(user);
     
-    return { caseType, nextCaseTS: user.nextCaseTS };
+    const nextCaseTS = user.nextCaseTS;
+    if (!nextCaseTS) {
+      throw new InternalServerErrorException(`Ошибка при установке времени следующего кейса`);
+    }
+    
+    return { caseType, nextCaseTS };
   }
 }
