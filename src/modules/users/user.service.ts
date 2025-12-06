@@ -679,7 +679,7 @@ export class UserService {
     return caseType;
   }
 
-  async openDailyCase(userId: number): Promise<{ caseType: ECaseType; nextCaseTS: string }> {
+  async openDailyCase(userId: number): Promise<{ caseType?: ECaseType; nextCaseTS: string }> {
     const user = await this.userRepo.findOne({ where: { id: userId } });
 
     if (!user) {
@@ -689,7 +689,7 @@ export class UserService {
     const nextCaseTS = await this.calculateNextCaseTS(userId);
     const currentTimestamp = Date.now();
     if (nextCaseTS && Number(nextCaseTS) > currentTimestamp) {
-      throw new BadRequestException(`Ежедневный кейс будет доступен через ${Math.ceil((Number(nextCaseTS) - currentTimestamp) / 1000)} секунд`);
+      return { nextCaseTS };
     }
 
     const coef = Math.random();
