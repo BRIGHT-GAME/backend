@@ -597,6 +597,24 @@ export class UserService {
     }
   }
 
+  private async calculateNextCaseTS(userId: number): Promise<string | undefined> {
+    const lastDailyCase = await this.caseHistoryRepository.findOne({
+      where: { 
+        userId, 
+        isDaily: true 
+      },
+      order: { createdAt: 'DESC' }
+    });
+    
+    if (!lastDailyCase) {
+      return undefined;
+    }
+    
+    const lastCaseTimestamp = lastDailyCase.createdAt.getTime();
+    const nextCaseTimestamp = lastCaseTimestamp + CASE_COOLDOWN_MS;
+    return String(nextCaseTimestamp);
+  }
+
   private async enrichUserWithGamesCount(user: UserEntity): Promise<UserDto> {
     const gamesCount = await this.getGamesCount(user.id);
     
@@ -614,15 +632,16 @@ export class UserService {
     const hasOpenedDailyCase = todayDailyCase && 
       todayDailyCase.createdAt >= startOfDay;
     
+    const nextCaseTS = await this.calculateNextCaseTS(user.id);
     const currentTimestamp = Date.now();
-    const caseAvailable = !user.nextCaseTS || user.nextCaseTS <= currentTimestamp;
+    const caseAvailable = !nextCaseTS || Number(nextCaseTS) <= currentTimestamp;
     
     return {
       ...user,
       gamesCount,
       hasOpenedDailyCase: !!hasOpenedDailyCase,
       caseAvailable,
-      nextCaseTS: user.nextCaseTS,
+      nextCaseTS,
     };
   }
 
@@ -660,16 +679,17 @@ export class UserService {
     return caseType;
   }
 
-  async openDailyCase(userId: number): Promise<{ caseType: ECaseType; nextCaseTS: number }> {
+  async openDailyCase(userId: number): Promise<{ caseType: ECaseType; nextCaseTS: string }> {
     const user = await this.userRepo.findOne({ where: { id: userId } });
 
     if (!user) {
       throw new NotFoundException(`Пользователь с идентификатором ${userId} не найден`);
     }
 
+    const nextCaseTS = await this.calculateNextCaseTS(userId);
     const currentTimestamp = Date.now();
-    if (user.nextCaseTS && user.nextCaseTS > currentTimestamp) {
-      throw new BadRequestException(`Ежедневный кейс будет доступен через ${Math.ceil((user.nextCaseTS - currentTimestamp) / 1000)} секунд`);
+    if (nextCaseTS && Number(nextCaseTS) > currentTimestamp) {
+      throw new BadRequestException(`Ежедневный кейс будет доступен через ${Math.ceil((Number(nextCaseTS) - currentTimestamp) / 1000)} секунд`);
     }
 
     const coef = Math.random();
@@ -692,14 +712,8 @@ export class UserService {
 
     await this.caseFunctions[caseType](user.id, true);
     const now = Date.now();
-    user.nextCaseTS = now + CASE_COOLDOWN_MS;
-    await this.userRepo.save(user);
+    const newNextCaseTS = String(now + CASE_COOLDOWN_MS);
     
-    const nextCaseTS = user.nextCaseTS;
-    if (!nextCaseTS) {
-      throw new InternalServerErrorException(`Ошибка при установке времени следующего кейса`);
-    }
-    
-    return { caseType, nextCaseTS };
+    return { caseType, nextCaseTS: newNextCaseTS };
   }
 }

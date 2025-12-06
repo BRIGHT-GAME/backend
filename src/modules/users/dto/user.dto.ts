@@ -97,7 +97,7 @@ export class UserDto implements IUser{
 
   @ApiProperty({
     description: 'Timestamp когда будет доступен следующий ежедневный кейс',
-    example: 1704067200000,
+    example: '1704067200000',
   })
-  nextCaseTS?: number;
+  nextCaseTS?: string;
 }

@@ -57,7 +57,4 @@ export class UserEntity implements IUser{
 
   @OneToMany(() => UserTasksEntity, (userTasks) => userTasks.user)
   tasks: UserTasksEntity[];
-
-  @Column({ nullable: true })
-  nextCaseTS?: number;
 }
