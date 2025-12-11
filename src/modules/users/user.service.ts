@@ -1,4 +1,4 @@
-import {BadRequestException, ConflictException, Inject, Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException, forwardRef} from '@nestjs/common';
+import {BadRequestException, ConflictException, Inject, Injectable, InternalServerErrorException, Logger, NotFoundException, UnauthorizedException, forwardRef} from '@nestjs/common';
 import {InjectRepository} from '@nestjs/typeorm';
 import {Repository} from 'typeorm';
 import {UserEntity} from './entity/user.entity';
@@ -42,6 +42,7 @@ const CASE_CHANCES: Record<ECaseType, [TStartDiapason, TEndDiapason]> = {
 
 @Injectable()
 export class UserService {
+  private readonly logger = new Logger(UserService.name);
   //TODO: установить id для предмета
   private goldMaskId: 10;
 
@@ -647,73 +648,99 @@ export class UserService {
 
 
   async openCase(userId: number): Promise<ECaseType> {
-    const user = await this.userRepo.findOne({ where: { id: userId } });
+    this.logger.log(`Starting openCase for userId: ${userId}`);
+    try {
+      const user = await this.userRepo.findOne({ where: { id: userId } });
 
-    if (!user) {
-      throw new NotFoundException(`Пользователь с идентификатором ${userId} не найден`);
-    }
-
-    if (user.gameCoins < CASE_PRICE) {
-      throw new BadRequestException(`У пользователя недостаточно монет, необходимо ${CASE_PRICE}`);
-    }
-
-    const coef = Math.random();
-    let caseType: ECaseType;
-
-    for (const key of Object.values(ECaseType)) {
-      const [ bottom, top ] = CASE_CHANCES[key];
-      if (coef >= bottom && coef <= top) {
-        caseType = key as ECaseType;
-        break;
+      if (!user) {
+        throw new NotFoundException(`Пользователь с идентификатором ${userId} не найден`);
       }
-    }
 
-    if (!caseType) {
-      caseType = ECaseType.energy_10;
-    }
+      if (user.gameCoins < CASE_PRICE) {
+        throw new BadRequestException(`У пользователя недостаточно монет, необходимо ${CASE_PRICE}`);
+      }
 
-    await this.caseFunctions[caseType](user.id);
-    user.gameCoins -= CASE_PRICE;
-    await this.userRepo.save(user);
-    
-    return caseType;
+      const coef = Math.random();
+      let caseType: ECaseType | undefined;
+
+      for (const key of Object.values(ECaseType)) {
+        const [ bottom, top ] = CASE_CHANCES[key];
+        if (coef >= bottom && coef <= top) {
+          caseType = key as ECaseType;
+          this.logger.log(`Case type determined: ${caseType} (coef: ${coef}, range: [${bottom}, ${top}])`);
+          break;
+        }
+      }
+
+      if (!caseType) {
+        this.logger.warn(`No case type matched coefficient ${coef}, defaulting to energy_10`);
+        caseType = ECaseType.energy_10;
+      }
+
+      await this.caseFunctions[caseType](user.id);
+      user.gameCoins -= CASE_PRICE;
+      await this.userRepo.save(user);
+
+      return caseType;
+    } catch (error) {
+      this.logger.error(`Error opening case for userId: ${userId}`, error.stack || error.message);
+      if (error instanceof NotFoundException || error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new InternalServerErrorException(`Failed to open case: ${error.message}`);
+    }
   }
 
+
   async openDailyCase(userId: number): Promise<{ caseType?: ECaseType; nextCaseTS: string }> {
-    const user = await this.userRepo.findOne({ where: { id: userId } });
+    this.logger.log(`Starting openDailyCase for userId: ${userId}`);
+    try {
+      const user = await this.userRepo.findOne({ where: { id: userId } });
 
-    if (!user) {
-      throw new NotFoundException(`Пользователь с идентификатором ${userId} не найден`);
-    }
-
-    const nextCaseTS = await this.calculateNextCaseTS(userId);
-    const currentTimestamp = Date.now();
-    if (nextCaseTS && Number(nextCaseTS) > currentTimestamp) {
-      return { nextCaseTS };
-    }
-
-    const coef = Math.random();
-    let caseType: ECaseType | undefined;
-
-    for (const key of Object.values(ECaseType)) {
-      if (key === ECaseType.gold_mask_repeat) {
-        continue;
+      if (!user) {
+        throw new NotFoundException(`Пользователь с идентификатором ${userId} не найден`);
       }
-      const [ bottom, top ] = CASE_CHANCES[key];
-      if (coef >= bottom && coef <= top) {
-        caseType = key as ECaseType;
-        break;
+
+      const nextCaseTS = await this.calculateNextCaseTS(userId);
+      const currentTimestamp = Date.now();
+
+      if (nextCaseTS && Number(nextCaseTS) > currentTimestamp) {
+        this.logger.log(`Case is on cooldown. Next available at: ${nextCaseTS}`);
+        return { nextCaseTS };
       }
-    }
 
-    if (!caseType) {
-      caseType = ECaseType.energy_10;
-    }
+      const coef = Math.random();
+      let caseType: ECaseType | undefined;
 
-    await this.caseFunctions[caseType](user.id, true);
-    const now = Date.now();
-    const newNextCaseTS = String(now + CASE_COOLDOWN_MS);
-    
-    return { caseType, nextCaseTS: newNextCaseTS };
+      for (const key of Object.values(ECaseType)) {
+        if (key === ECaseType.gold_mask_repeat) {
+          continue;
+        }
+        const [ bottom, top ] = CASE_CHANCES[key];
+        if (coef >= bottom && coef <= top) {
+          caseType = key as ECaseType;
+          this.logger.log(`Case type determined: ${caseType} (coef: ${coef}, range: [${bottom}, ${top}])`);
+          break;
+        }
+      }
+
+      if (!caseType) {
+        this.logger.warn(`No case type matched coefficient ${coef}, defaulting to energy_10`);
+        caseType = ECaseType.energy_10;
+      }
+
+      await this.caseFunctions[caseType](user.id, true);
+
+      const now = Date.now();
+      const newNextCaseTS = String(now + CASE_COOLDOWN_MS);
+
+      return { caseType, nextCaseTS: newNextCaseTS };
+    } catch (error) {
+      this.logger.error(`Error opening daily case for userId: ${userId}`, error.stack || error.message);
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new InternalServerErrorException(`Failed to open daily case: ${error.message}`);
+    }
   }
 }
