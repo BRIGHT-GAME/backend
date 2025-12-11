@@ -28,12 +28,12 @@ type TEndDiapason = number;
 
 
 const CASE_CHANCES: Record<ECaseType, [TStartDiapason, TEndDiapason]> = {
-  [ECaseType.energy_10]: [0, 0.3],
-  [ECaseType.energy_30]: [0.31, 0.5],
-  [ECaseType.energy_50]: [0.51, 0.7],
-  [ECaseType.coins_100]: [0.71, 0.9],
-  [ECaseType.coins_250]: [0.91, 0.98],
-  [ECaseType.coins_500]: [0.981, 0.999],
+  [ECaseType.energy_10]: [0, 0.31],
+  [ECaseType.energy_30]: [0.31, 0.51],
+  [ECaseType.energy_50]: [0.51, 0.71],
+  [ECaseType.coins_100]: [0.71, 0.91],
+  [ECaseType.coins_250]: [0.91, 0.981],
+  [ECaseType.coins_500]: [0.981, 0.9991],
   [ECaseType.gold_mask]: [0.9991, 1],
   [ECaseType.gold_mask_repeat]: [-1,-1],
 }
@@ -669,7 +669,7 @@ export class UserService {
     }
 
     if (!caseType) {
-      throw new InternalServerErrorException(`Произошла неизвестная ошибка при вычислении кейса`)
+      caseType = ECaseType.energy_10;
     }
 
     await this.caseFunctions[caseType](user.id);
@@ -707,7 +707,7 @@ export class UserService {
     }
 
     if (!caseType) {
-      throw new InternalServerErrorException(`Произошла неизвестная ошибка при вычислении кейса`)
+      caseType = ECaseType.energy_10;
     }
 
     await this.caseFunctions[caseType](user.id, true);
