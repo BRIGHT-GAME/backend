@@ -29,7 +29,7 @@ export class ProfileService {
     const [allUsers, totalUsers] = await this.userRepository.findAndCount({
       select: ['id', 'gameCoins'],
       order: {
-        gameCoins: 'DESC',
+        level: 'DESC',
       },
     });
 
