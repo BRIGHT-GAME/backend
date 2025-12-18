@@ -10,14 +10,15 @@ import { UserEntity } from "./user.entity";
 
 //TODO: установить стринги для кейсов
 export enum ECaseType {
-    energy_10 = '10_energy',
-    energy_30 = '30_energy',
-    energy_50 = '50_energy',
+    // energy_10 = '10_energy',
+    // energy_30 = '30_energy',
+    energy_40 = '40_energy',
+    // energy_50 = '50_energy',
     coins_100 = '100_coins',
-    coins_250 = '250_coins',
-    coins_500 = '500_coins',
-    gold_mask = 'gold_mask',
-    gold_mask_repeat = 'gold_mask_repeat',
+    // coins_250 = '250_coins',
+    // coins_500 = '500_coins',
+    // gold_mask = 'gold_mask',
+    // gold_mask_repeat = 'gold_mask_repeat',
 }
 
 @Entity('case_history')

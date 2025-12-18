@@ -28,14 +28,16 @@ type TEndDiapason = number;
 
 
 const CASE_CHANCES: Record<ECaseType, [TStartDiapason, TEndDiapason]> = {
-  [ECaseType.energy_10]: [0, 0.31],
-  [ECaseType.energy_30]: [0.31, 0.51],
-  [ECaseType.energy_50]: [0.51, 0.71],
-  [ECaseType.coins_100]: [0.71, 0.91],
-  [ECaseType.coins_250]: [0.91, 0.981],
-  [ECaseType.coins_500]: [0.981, 0.9991],
-  [ECaseType.gold_mask]: [0.9991, 1],
-  [ECaseType.gold_mask_repeat]: [-1,-1],
+  [ECaseType.energy_40]: [0, 0.5],
+  [ECaseType.coins_100]: [0.51, 1],
+  // [ECaseType.energy_10]: [0, 0.31],
+  // [ECaseType.energy_30]: [0.31, 0.51],
+  // [ECaseType.energy_50]: [0.51, 0.71],
+  // [ECaseType.coins_100]: [0.71, 0.91],
+  // [ECaseType.coins_250]: [0.91, 0.981],
+  // [ECaseType.coins_500]: [0.981, 0.9991],
+  // [ECaseType.gold_mask]: [0.9991, 1],
+  // [ECaseType.gold_mask_repeat]: [-1,-1],
 }
 
 
@@ -47,60 +49,170 @@ export class UserService {
   private goldMaskId: 10;
 
   private caseFunctions: Record<ECaseType, (userId: number, isDaily?: boolean) => Promise<void>> = {
-    [ECaseType.gold_mask_repeat]: async () => {},
-    [ECaseType.energy_10]: async (userId: number, isDaily: boolean = false) => {
+    // [ECaseType.gold_mask_repeat]: async () => {},
+    // [ECaseType.energy_10]: async (userId: number, isDaily: boolean = false) => {
+    //   const users = await this.userRepo.find({
+    //     where: {
+    //       id: userId,
+    //     }
+    //   })
+
+    //   if (users.length === 0)
+    //     return;
+
+    //   const user = users[0];
+    //   user.energyCurrent += 10;
+    //   const caseType = ECaseType.energy_10;
+    //   await this.userRepo.save(user);
+    //   await this.caseHistoryRepository.save({
+    //     userId,
+    //     caseType,
+    //     isDaily,
+    //   })
+    // },
+    // [ECaseType.energy_30]: async (userId: number, isDaily: boolean = false) => {
+    //   const users = await this.userRepo.find({
+    //     where: {
+    //       id: userId,
+    //     }
+    //   })
+
+    //   if (users.length === 0)
+    //     return;
+
+    //   const user = users[0];
+    //   user.energyCurrent += 30;
+    //   const caseType = ECaseType.energy_30;
+    //   await this.userRepo.save(user);
+    //   await this.caseHistoryRepository.save({
+    //     userId,
+    //     caseType,
+    //     isDaily,
+    //   })
+    // },
+    // [ECaseType.energy_50]: async (userId: number, isDaily: boolean = false) => {
+    //   const users = await this.userRepo.find({
+    //     where: {
+    //       id: userId,
+    //     }
+    //   })
+
+    //   if (users.length === 0)
+    //     return;
+
+    //   const user = users[0];
+    //   user.energyCurrent += 50;
+    //   const caseType = ECaseType.energy_50;
+    //   await this.userRepo.save(user);
+    //   await this.caseHistoryRepository.save({
+    //     userId,
+    //     caseType,
+    //     isDaily,
+    //   })
+    // },
+    // [ECaseType.coins_100]: async (userId: number, isDaily: boolean = false) => {
+    //   const users = await this.userRepo.find({
+    //     where: {
+    //       id: userId,
+    //     }
+    //   })
+
+    //   if (users.length === 0)
+    //     return;
+
+    //   const user = users[0];
+    //   user.gameCoins += 100;
+    //   const caseType = ECaseType.coins_100;
+    //   await this.userRepo.save(user);
+    //   await this.caseHistoryRepository.save({
+    //     userId,
+    //     caseType,
+    //     isDaily,
+    //   })
+    // },
+    // [ECaseType.coins_250]: async (userId: number, isDaily: boolean = false) => {
+    //   const users = await this.userRepo.find({
+    //     where: {
+    //       id: userId,
+    //     }
+    //   })
+
+    //   if (users.length === 0)
+    //     return;
+
+    //   const user = users[0];
+    //   user.gameCoins += 250;
+    //   const caseType = ECaseType.coins_250;
+    //   await this.userRepo.save(user);
+    //   await this.caseHistoryRepository.save({
+    //     userId,
+    //     caseType,
+    //   })
+    // },
+    // [ECaseType.coins_500]: async (userId: number, isDaily: boolean = false) => {
+    //   const users = await this.userRepo.find({
+    //     where: {
+    //       id: userId,
+    //     }
+    //   })
+
+    //   if (users.length === 0)
+    //     return;
+
+    //   const user = users[0];
+    //   user.gameCoins += 500;
+    //   const caseType = ECaseType.coins_500;
+    //   await this.userRepo.save(user);
+    //   await this.caseHistoryRepository.save({
+    //     userId,
+    //     caseType,
+    //     isDaily,
+    //   })
+    // },
+    // [ECaseType.gold_mask]: async (userId: number, isDaily: boolean = false) => {
+    //   const user = await this.userRepo.findOne({
+    //     where: { id: userId },
+    //     relations: ['inventory', 'inventory.item'],
+    //   });
+
+    //   if (!user) {
+    //     return;
+    //   }
+
+    //   let caseType = ECaseType.gold_mask;
+    //   let existingInventory = user.inventory.find(
+    //     (inv) => inv.itemId === this.goldMaskId,
+    //   );
+    //   if (!existingInventory) {
+    //     // Если не найдено, создаём новую запись
+    //     const newInv = this.inventoryRepo.create({
+    //       userId: user.id,
+    //       itemId: this.goldMaskId,
+    //     });
+    //     await this.inventoryRepo.save(newInv);
+    //   } else {
+    //     user.gameCoins += 400;
+    //     caseType= ECaseType.gold_mask_repeat  
+    //   }
+    //   await this.userRepo.save(user);
+    //   await this.caseHistoryRepository.save({
+    //     userId,
+    //     caseType,
+    //     isDaily,
+    //   })
+    // },
+    [ECaseType.energy_40]: async (userId: number, isDaily: boolean = false) => {
       const users = await this.userRepo.find({
         where: {
           id: userId,
         }
       })
-
       if (users.length === 0)
         return;
 
       const user = users[0];
-      user.energyCurrent += 10;
-      const caseType = ECaseType.energy_10;
-      await this.userRepo.save(user);
-      await this.caseHistoryRepository.save({
-        userId,
-        caseType,
-        isDaily,
-      })
-    },
-    [ECaseType.energy_30]: async (userId: number, isDaily: boolean = false) => {
-      const users = await this.userRepo.find({
-        where: {
-          id: userId,
-        }
-      })
-
-      if (users.length === 0)
-        return;
-
-      const user = users[0];
-      user.energyCurrent += 30;
-      const caseType = ECaseType.energy_30;
-      await this.userRepo.save(user);
-      await this.caseHistoryRepository.save({
-        userId,
-        caseType,
-        isDaily,
-      })
-    },
-    [ECaseType.energy_50]: async (userId: number, isDaily: boolean = false) => {
-      const users = await this.userRepo.find({
-        where: {
-          id: userId,
-        }
-      })
-
-      if (users.length === 0)
-        return;
-
-      const user = users[0];
-      user.energyCurrent += 50;
-      const caseType = ECaseType.energy_50;
+      user.energyCurrent += 40;
+      const caseType = ECaseType.energy_40;
       await this.userRepo.save(user);
       await this.caseHistoryRepository.save({
         userId,
@@ -114,84 +226,12 @@ export class UserService {
           id: userId,
         }
       })
-
       if (users.length === 0)
         return;
 
       const user = users[0];
       user.gameCoins += 100;
       const caseType = ECaseType.coins_100;
-      await this.userRepo.save(user);
-      await this.caseHistoryRepository.save({
-        userId,
-        caseType,
-        isDaily,
-      })
-    },
-    [ECaseType.coins_250]: async (userId: number, isDaily: boolean = false) => {
-      const users = await this.userRepo.find({
-        where: {
-          id: userId,
-        }
-      })
-
-      if (users.length === 0)
-        return;
-
-      const user = users[0];
-      user.gameCoins += 250;
-      const caseType = ECaseType.coins_250;
-      await this.userRepo.save(user);
-      await this.caseHistoryRepository.save({
-        userId,
-        caseType,
-      })
-    },
-    [ECaseType.coins_500]: async (userId: number, isDaily: boolean = false) => {
-      const users = await this.userRepo.find({
-        where: {
-          id: userId,
-        }
-      })
-
-      if (users.length === 0)
-        return;
-
-      const user = users[0];
-      user.gameCoins += 500;
-      const caseType = ECaseType.coins_500;
-      await this.userRepo.save(user);
-      await this.caseHistoryRepository.save({
-        userId,
-        caseType,
-        isDaily,
-      })
-    },
-    [ECaseType.gold_mask]: async (userId: number, isDaily: boolean = false) => {
-      const user = await this.userRepo.findOne({
-        where: { id: userId },
-        relations: ['inventory', 'inventory.item'],
-      });
-
-      if (!user) {
-        return;
-      }
-
-      let caseType = ECaseType.gold_mask;
-      let existingInventory = user.inventory.find(
-        (inv) => inv.itemId === this.goldMaskId,
-      );
-      if (!existingInventory) {
-        // Если не найдено, создаём новую запись
-        const newInv = this.inventoryRepo.create({
-          userId: user.id,
-          itemId: this.goldMaskId,
-        });
-        await this.inventoryRepo.save(newInv);
-      } else {
-        user.gameCoins += 400;
-        caseType= ECaseType.gold_mask_repeat  
-      }
       await this.userRepo.save(user);
       await this.caseHistoryRepository.save({
         userId,
@@ -673,8 +713,8 @@ export class UserService {
       }
 
       if (!caseType) {
-        this.logger.warn(`No case type matched coefficient ${coef}, defaulting to energy_10`);
-        caseType = ECaseType.energy_10;
+        this.logger.warn(`No case type matched coefficient ${coef}, defaulting to energy_40`);
+        caseType = ECaseType.energy_40;
       }
 
       await this.caseFunctions[caseType](user.id);
@@ -713,9 +753,6 @@ export class UserService {
       let caseType: ECaseType | undefined;
 
       for (const key of Object.values(ECaseType)) {
-        if (key === ECaseType.gold_mask_repeat) {
-          continue;
-        }
         const [ bottom, top ] = CASE_CHANCES[key];
         if (coef >= bottom && coef <= top) {
           caseType = key as ECaseType;
@@ -725,8 +762,8 @@ export class UserService {
       }
 
       if (!caseType) {
-        this.logger.warn(`No case type matched coefficient ${coef}, defaulting to energy_10`);
-        caseType = ECaseType.energy_10;
+        this.logger.warn(`No case type matched coefficient ${coef}, defaulting to energy_40`);
+        caseType = ECaseType.energy_40;
       }
 
       await this.caseFunctions[caseType](user.id, true);
